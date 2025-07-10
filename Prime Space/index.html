@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جرد المخازن</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2d6a4f;
+            --secondary-color: #40916c;
+            --accent-color: #52b788;
+            --light-bg: #f8f9fa;
+            --white: #ffffff;
+            --text-dark: #212529;
+            --text-light: #6c757d;
+            --border-color: #dee2e6;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --border-radius: 8px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            background: var(--light-bg);
+            color: var(--text-dark);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+        .site-logo {
+            height: 60px;
+            margin-bottom: 10px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        @media (max-width: 600px) {
+            .site-logo { height: 40px; }
+        }
+        h1, h2 { font-size: 2.5rem; margin-bottom: 10px; }
+        .subtitle { font-size: 1.1rem; opacity: 0.9; }
+        .contact-info {
+            margin:8px 0 0 0; font-size:1.1rem; color:#40916c;
+        }
+        .dev-info {
+            margin:0; font-size:1rem; color:#888;
+        }
+        .main-content { display: grid; gap: 30px; grid-template-columns: 1fr; }
+        .card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        .form-section { margin-bottom: 30px; }
+        .form-title {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .form-grid {
+            display: grid;
+            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            margin-bottom: 20px;
+        }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: 600; margin-bottom: 5px; color: var(--text-dark); }
+        input, textarea {
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(64, 145, 108, 0.1);
+        }
+        textarea { resize: vertical; min-height: 80px; }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+        .btn-primary { background: var(--secondary-color); color: var(--white); }
+        .btn-primary:hover { background: var(--primary-color); transform: translateY(-1px); }
+        .btn-secondary { background: var(--accent-color); color: var(--white); }
+        .btn-secondary:hover { background: var(--secondary-color); }
+        .btn-danger { background: #dc3545; color: var(--white); }
+        .btn-danger:hover { background: #c82333; }
+        .btn-small { padding: 6px 12px; font-size: 0.9rem; }
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .products-table th,
+        .products-table td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .products-table th {
+            background: var(--primary-color);
+            color: var(--white);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        .products-table tbody tr:hover { background: rgba(64, 145, 108, 0.05); }
+        .product-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: var(--border-radius);
+            border: 2px solid var(--border-color);
+        }
+        .log-section { margin-top: 30px; }
+        .log-title {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .log-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+            background: var(--light-bg);
+            border-radius: var(--border-radius);
+            padding: 15px;
+        }
+        .log-item {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+        .log-item:last-child { border-bottom: none; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .modal-title { color: var(--primary-color); font-size: 1.5rem; }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .close-btn:hover { color: var(--text-dark); }
+        .image-preview {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: var(--border-radius);
+            border: 2px solid var(--border-color);
+            margin-top: 10px;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .blank-table, .blank-table th, .blank-table td {
+            border: 1px solid #000 !important;
+        }
+        .blank-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .blank-table th, .blank-table td {
+            padding: 8px;
+            text-align: center;
+            height: 30px;
+        }
+        .blank-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+        @media print {
+            body { background: white; padding: 0; }
+            .no-print { display: none !important; }
+            .card { box-shadow: none; border: 1px solid #000; }
+            .products-table { border: 1px solid #000; }
+            .products-table th,
+            .products-table td { border: 1px solid #000; }
+            .log-section { page-break-before: always; }
+            .log-list {
+                background: white;
+                border: 1px solid #000;
+                max-height: none;
+                overflow: visible;
+            }
+            .log-item { page-break-inside: avoid; }
+        }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            h1, h2 { font-size: 2rem; }
+            .form-grid { grid-template-columns: 1fr; }
+            .toolbar { flex-direction: column; }
+            .btn { width: 100%; }
+            .products-table { font-size: 0.9rem; }
+            .products-table th,
+            .products-table td { padding: 10px 5px; }
+            .product-image { width: 40px; height: 40px; }
+        }
+        @media (max-width: 600px) {
+            .products-table,
+            .products-table thead,
+            .products-table tbody,
+            .products-table th,
+            .products-table td,
+            .products-table tr {
+                display: block;
+            }
+            .products-table thead tr { position: absolute; top: -9999px; left: -9999px; }
+            .products-table tr {
+                background: var(--white);
+                border: 1px solid var(--border-color);
+                border-radius: var(--border-radius);
+                padding: 15px;
+                margin-bottom: 15px;
+                box-shadow: var(--shadow);
+            }
+            .products-table td {
+                border: none;
+                position: relative;
+                padding-left: 50%;
+                padding-right: 10px;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                text-align: right;
+            }
+            .products-table td:before {
+                content: attr(data-label);
+                position: absolute;
+                left: 6px;
+                width: 45%;
+                text-align: left;
+                font-weight: bold;
+                color: var(--primary-color);
+            }
+            .products-table td:first-child {
+                text-align: center;
+                padding-left: 10px;
+            }
+            .products-table td:first-child:before { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // امسح صلاحية الجلسة عند كل ريفريش
+        sessionStorage.removeItem('edit_auth');
+    </script>
+    <div class="container">
+        <header>
+            <img src="logo.png" alt="شعار الموقع" class="site-logo">
+            <h3> جرد المخازن</h3>
+            
+
+          
+        </header>
+
+        <div class="main-content">
+            <!-- قسم إضافة المنتجات -->
+            <div class="card">
+                <div class="form-section">
+                    <h2 class="form-title">➕ إضافة صنف جديد</h2>
+                    <form id="productForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="name">اسم الصنف</label>
+                                <input type="text" id="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="quantity">العدد</label>
+                                <input type="number" id="quantity" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="image">صورة المنتج</label>
+                                <input type="file" id="image" accept="image/*">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="note">ملاحظات</label>
+                            <textarea id="note" placeholder="أضف أي ملاحظات..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">➕ إضافة الصنف</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- قسم جدول المنتجات -->
+            <div class="card">
+                <div class="toolbar no-print">
+                    <button onclick="printInventory()" class="btn btn-secondary">🖨 طباعة المخزون</button>
+                    <button onclick="printLog()" class="btn btn-secondary">📄 طباعة السجل</button>
+                    <button onclick="printAll()" class="btn btn-secondary">📋 طباعة شاملة</button>
+                    <button onclick="openBlankTable()" class="btn btn-secondary">📄 جدول فارغ</button>
+                    <button onclick="exportData()" class="btn btn-secondary">⬇️ تصدير البيانات</button>
+                    <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+                    <button onclick="document.getElementById('importFile').click()" class="btn btn-secondary">⬆️ استيراد البيانات</button>
+                </div>
+                
+                <div id="inventory-section">
+                    <h2 class="form-title">📋 المخزون الحالي</h2>
+                    <table class="products-table" id="productsTable">
+                        <thead>
+                            <tr>
+                                <th>الصورة</th>
+                                <th>اسم الصنف</th>
+                                <th>العدد</th>
+                                <th>الملاحظات</th>
+                                <th class="no-print">العمليات</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <div class="log-section" id="log-section">
+                    <h2 class="log-title">📊 سجل العمليات</h2>
+                    <ul class="log-list" id="logList"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة التعديل -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">✏️ تعديل الصنف</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="editName">اسم الصنف</label>
+                    <input type="text" id="editName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editQuantity">العدد</label>
+                    <input type="number" id="editQuantity" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="editImage">تغيير الصورة</label>
+                    <input type="file" id="editImage" accept="image/*">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="editNote">الملاحظات</label>
+                <textarea id="editNote"></textarea>
+            </div>
+            <img id="imagePreview" class="image-preview" style="display: none;">
+            <div style="margin-top: 20px;">
+                <button onclick="saveEdit()" class="btn btn-primary">💾 حفظ التعديلات</button>
+                <button onclick="closeModal()" class="btn btn-secondary">❌ إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة الجدول الفارغ -->
+    <div class="modal" id="blankTableModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">📄 جدول فارغ للطباعة</h3>
+                <button class="close-btn" onclick="closeBlankTableModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="rowCount">عدد الصفوف:</label>
+                <input type="number" id="rowCount" min="1" max="200" value="15">
+            </div>
+            <div style="margin-top: 20px;">
+                <button onclick="generateBlankTable()" class="btn btn-primary">📋 إنشاء الجدول</button>
+                <button onclick="printBlankTable()" class="btn btn-secondary">🖨 طباعة الجدول</button>
+            </div>
+            <div id="blankTablePreview" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // كلمة سر النظام (hash محفوظ)
+        function setPasswordIfNeeded() {
+            let passHash = localStorage.getItem('inventory_password');
+            if (!passHash) {
+                let pass1 = prompt("عيّن كلمة سر قوية لأول مرة:");
+                if (!pass1) return false;
+                let pass2 = prompt("أعد كتابة كلمة السر للتأكيد:");
+                if (pass1 !== pass2) {
+                    alert("كلمتا السر غير متطابقتين!");
+                    return false;
+                }
+                passHash = CryptoJS.SHA256(pass1).toString();
+                localStorage.setItem('inventory_password', passHash);
+                alert("تم تعيين كلمة السر بنجاح. احفظها جيداً، لا يمكن تغييرها إلا بإعادة ضبط المتصفح.");
+            }
+            return true;
+        }
+        function checkPassword() {
+            let passHash = localStorage.getItem('inventory_password');
+            if (!passHash) return false;
+            let pass = prompt("أدخل كلمة السر:");
+            if (!pass) return false;
+            let inputHash = CryptoJS.SHA256(pass).toString();
+            if (inputHash !== passHash) {
+                alert("كلمة السر غير صحيحة!");
+                return false;
+            }
+            return pass;
+        }
+
+        // تحقق كلمة السر لجلسة التعديل/الحذف
+        function checkSessionPassword() {
+            if (sessionStorage.getItem('edit_auth') === 'ok') return true;
+            let passHash = localStorage.getItem('inventory_password');
+            if (!passHash) return false;
+            let pass = prompt("أدخل كلمة السر:");
+            if (!pass) return false;
+            let inputHash = CryptoJS.SHA256(pass).toString();
+            if (inputHash !== passHash) {
+                alert("كلمة السر غير صحيحة!");
+                return false;
+            }
+            sessionStorage.setItem('edit_auth', 'ok');
+            return true;
+        }
+
+        // تخزين البيانات
+        let products = JSON.parse(localStorage.getItem('products') || '[]');
+        let logs = JSON.parse(localStorage.getItem('logs') || '[]');
+        let currentEditIndex = -1;
+
+        // حفظ البيانات
+        function saveData() {
+            localStorage.setItem('products', JSON.stringify(products));
+            localStorage.setItem('logs', JSON.stringify(logs));
+        }
+
+        // زر تصدير البيانات (مع تشفير بكلمة سر)
+        function exportData() {
+            if (!setPasswordIfNeeded()) return;
+            let pass = checkPassword();
+            if (!pass) return;
+            const data = {
+                products: localStorage.getItem('products') || '[]',
+                logs: localStorage.getItem('logs') || '[]'
+            };
+            const encrypted = CryptoJS.AES.encrypt(JSON.stringify(data), pass).toString();
+            const blob = new Blob([encrypted], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'inventory_protected.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // زر استيراد البيانات (مع فك التشفير بكلمة سر)
+        function importData(event) {
+            if (!setPasswordIfNeeded()) return;
+            let pass = checkPassword();
+            if (!pass) return;
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const decrypted = CryptoJS.AES.decrypt(e.target.result, pass).toString(CryptoJS.enc.Utf8);
+                    if (!decrypted) throw Error();
+                    const data = JSON.parse(decrypted);
+                    if (data.products) localStorage.setItem('products', data.products);
+                    if (data.logs) localStorage.setItem('logs', data.logs);
+                    alert('تم الاستيراد بنجاح! أعد تحميل الصفحة.');
+                } catch {
+                    alert('كلمة السر غير صحيحة أو الملف تالف!');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // إضافة سجل
+        function addLog(message) {
+            logs.push(`${message} - ${new Date().toLocaleString('ar-EG')}`);
+            saveData();
+            renderLogs();
+        }
+
+        // رسم جدول المنتجات
+        function renderProducts() {
+            const tbody = document.querySelector('#productsTable tbody');
+            tbody.innerHTML = '';
+            products.forEach((product, index) => {
+                const row = document.createElement('tr');
+                row.className = 'fade-in';
+                row.innerHTML = `
+                    <td data-label="الصورة">
+                        ${product.image ? `<img src="${product.image}" class="product-image" alt="${product.name}">` : '📦'}
+                    </td>
+                    <td data-label="اسم الصنف">${product.name}</td>
+                    <td data-label="العدد">${product.quantity}</td>
+                    <td data-label="الملاحظات">${product.note || '-'}</td>
+                    <td data-label="العمليات" class="no-print">
+                        <button onclick="editProduct(${index})" class="btn btn-secondary btn-small">✏️</button>
+                        <button onclick="deleteProduct(${index})" class="btn btn-danger btn-small">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // رسم السجل
+        function renderLogs() {
+            const logList = document.getElementById('logList');
+            logList.innerHTML = '';
+            logs.forEach(log => {
+                const li = document.createElement('li');
+                li.className = 'log-item';
+                li.textContent = log;
+                logList.appendChild(li);
+            });
+        }
+
+        // إضافة منتج جديد
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value.trim();
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const note = document.getElementById('note').value.trim();
+            const imageFile = document.getElementById('image').files[0];
+            if (imageFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const product = {
+                        name,
+                        quantity,
+                        note,
+                        image: e.target.result
+                    };
+                    products.push(product);
+                    addLog(`إضافة: ${name} (${quantity})`);
+                    renderProducts();
+                    document.getElementById('productForm').reset();
+                };
+                reader.readAsDataURL(imageFile);
+            } else {
+                const product = {
+                    name,
+                    quantity,
+                    note,
+                    image: null
+                };
+                products.push(product);
+                addLog(`إضافة: ${name} (${quantity})`);
+                renderProducts();
+                document.getElementById('productForm').reset();
+            }
+        });
+
+        // تعديل منتج (مع باسورد الجلسة)
+        function editProduct(index) {
+            if (!checkSessionPassword()) return;
+            currentEditIndex = index;
+            const product = products[index];
+            document.getElementById('editName').value = product.name;
+            document.getElementById('editQuantity').value = product.quantity;
+            document.getElementById('editNote').value = product.note || '';
+            const preview = document.getElementById('imagePreview');
+            if (product.image) {
+                preview.src = product.image;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        // حفظ التعديل
+        function saveEdit() {
+            if (currentEditIndex === -1) return;
+            const oldProduct = products[currentEditIndex];
+            const newName = document.getElementById('editName').value.trim();
+            const newQuantity = parseInt(document.getElementById('editQuantity').value);
+            const newNote = document.getElementById('editNote').value.trim();
+            const newImageFile = document.getElementById('editImage').files[0];
+            let changes = [];
+            if (oldProduct.name !== newName) {
+                changes.push(`الاسم من "${oldProduct.name}" إلى "${newName}"`);
+            }
+            if (oldProduct.quantity !== newQuantity) {
+                changes.push(`العدد من ${oldProduct.quantity} إلى ${newQuantity}`);
+            }
+            if (oldProduct.note !== newNote) {
+                changes.push(`الملاحظات`);
+            }
+            if (newImageFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    products[currentEditIndex] = {
+                        ...oldProduct,
+                        name: newName,
+                        quantity: newQuantity,
+                        note: newNote,
+                        image: e.target.result
+                    };
+                    changes.push(`الصورة`);
+                    addLog(`تعديل: ${changes.join(', ')}`);
+                    renderProducts();
+                    closeModal();
+                };
+                reader.readAsDataURL(newImageFile);
+            } else {
+                products[currentEditIndex] = {
+                    ...oldProduct,
+                    name: newName,
+                    quantity: newQuantity,
+                    note: newNote
+                };
+                if (changes.length > 0) {
+                    addLog(`تعديل: ${changes.join(', ')}`);
+                }
+                renderProducts();
+                closeModal();
+            }
+        }
+
+        // حذف منتج (مع باسورد الجلسة)
+        function deleteProduct(index) {
+            if (!checkSessionPassword()) return;
+            if (confirm('هل أنت متأكد من حذف هذا الصنف؟')) {
+                const product = products[index];
+                products.splice(index, 1);
+                addLog(`حذف: ${product.name}`);
+                renderProducts();
+            }
+        }
+
+        // إغلاق نافذة التعديل
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditIndex = -1;
+        }
+
+        // فتح نافذة الجدول الفارغ
+        function openBlankTable() {
+            document.getElementById('blankTableModal').style.display = 'flex';
+            generateBlankTable();
+        }
+
+        // إغلاق نافذة الجدول الفارغ
+        function closeBlankTableModal() {
+            document.getElementById('blankTableModal').style.display = 'none';
+        }
+
+        // إنشاء الجدول الفارغ
+        function generateBlankTable() {
+            const rowCount = parseInt(document.getElementById('rowCount').value) || 15;
+            const preview = document.getElementById('blankTablePreview');
+            let tableHTML = `
+                <div class="blank-table-header">
+                    <h2>جدول جرد المخازن</h2>
+                    <p class="blank-table-date">التاريخ: ${new Date().toLocaleDateString('ar-EG')}</p>
+                </div>
+                <table class="blank-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">م</th>
+                            <th>اسم الصنف</th>
+                            <th style="width: 100px;">العدد</th>
+                            <th>ملاحظات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            for (let i = 1; i <= rowCount; i++) {
+                tableHTML += `
+                    <tr>
+                        <td>${i}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                `;
+            }
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+            preview.innerHTML = tableHTML;
+        }
+
+        // طباعة الجدول الفارغ
+        function printBlankTable() {
+            const printWindow = window.open('', '_blank');
+            const tableContent = document.getElementById('blankTablePreview').innerHTML;
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>جدول جرد المخازن</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .blank-table-header { text-align: center; margin-bottom: 20px; }
+                        .blank-table-header h2 { color: #2d6a4f; margin-bottom: 10px; }
+                        .blank-table-date { color: #666; font-size: 0.9rem; }
+                        .blank-table { width: 100%; border-collapse: collapse; }
+                        .blank-table th, .blank-table td { border: 1px solid #000 !important; padding: 8px; text-align: center; height: 30px; }
+                        .blank-table th { background: #f5f5f5; font-weight: bold; }
+                        @media print { body { margin: 0; } }
+                    </style>
+                </head>
+                <body>
+                    ${tableContent}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // معاينة الصورة في نافذة التعديل
+        document.getElementById('editImage').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('imagePreview');
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // وظائف الطباعة
+        function printInventory() {
+            document.getElementById('log-section').style.display = 'none';
+            window.print();
+            document.getElementById('log-section').style.display = 'block';
+        }
+        function printLog() {
+            document.getElementById('inventory-section').style.display = 'none';
+            window.print();
+            document.getElementById('inventory-section').style.display = 'block';
+        }
+        function printAll() {
+            window.print();
+        }
+
+        // إغلاق النافذة عند الضغط خارجها
+        window.addEventListener('click', function(e) {
+            const editModal = document.getElementById('editModal');
+            const blankTableModal = document.getElementById('blankTableModal');
+            if (e.target === editModal) {
+                closeModal();
+            }
+            if (e.target === blankTableModal) {
+                closeBlankTableModal();
+            }
+        });
+
+        // تحميل البيانات عند بدء التطبيق
+        renderProducts();
+        renderLogs();
+    </script>
+
+    <div id="wa-contact-container">
+        <div class="wa-contact-label"> للدعم الفني في حالة الضرورة</div>
+        <a href="https://wa.me/201025788140" target="_blank" id="wa-btn" title="تواصل واتساب">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="واتساب" style="width:38px;height:38px;">
+        </a>
+    </div>
+    <style>
+    #wa-contact-container {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+    .wa-contact-label {
+        background: #fff;
+        color: #128c7e;
+        font-weight: bold;
+        font-size: 1.05rem;
+        padding: 5px 16px 7px 16px;
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 2px 8px rgba(37,211,102,0.10);
+        margin-bottom: 0;
+        margin-left: 0;
+        margin-right: 0;
+        margin-top: 0;
+        direction: rtl;
+        border-bottom: 2px solid #25d366;
+    }
+    #wa-btn {
+        background: #25d366;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px #aaa;
+        padding: 8px;
+        transition: box-shadow 0.2s, background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #wa-btn:hover {
+        box-shadow: 0 4px 16px #25d366;
+        background: #1ebe57;
+    }
+    @media (max-width: 600px) {
+        #wa-contact-container { right: 8px; bottom: 8px; }
+        .wa-contact-label { font-size: 0.95rem; padding: 4px 10px 6px 10px; }
+        #wa-btn img { width: 30px; height: 30px; }
+        #wa-btn { padding: 5px; }
+    }
+    </style>
+</body>
+</html>
